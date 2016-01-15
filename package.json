@@ -1,0 +1,31 @@
+{
+  "name": "contribution-report",
+  "version": "1.0.0",
+  "description": "generate github contribution reports for repositories",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && node test"
+  },
+  "bin": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/bengl/contribution-report.git"
+  },
+  "keywords": [
+    "contribution"
+  ],
+  "author": "Bryan English <bryan@bryanenglish.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bengl/contribution-report/issues"
+  },
+  "homepage": "https://github.com/bengl/contribution-report#readme",
+  "dependencies": {
+    "debug": "^2.2.0",
+    "github": "^0.2.4",
+    "yargs": "^3.31.0"
+  },
+  "devDependencies": {
+    "standard": "^5.4.1"
+  }
+}
