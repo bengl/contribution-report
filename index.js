@@ -97,6 +97,11 @@ function getPage (n) {
 
 function analyze (list) {
   debug('analyze', 'analyzing', list.length, 'commits')
+  if (argv.until) {
+    console.log('%d commits in `%s` between %s and %s:', list.length, argv.repo, argv.since, argv.until)
+  } else {
+    console.log('%d commits in `%s` since %s:', list.length, argv.repo, argv.since)
+  }
   var condensed = {}
   list.forEach(function (commit) {
     var author = commit.author ? commit.author.login : commit.committer.login
