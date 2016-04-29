@@ -34,6 +34,9 @@ var argv = require('yargs')
   .describe('components', 'Shows breakdowns of commits by component')
   .boolean('components')
   .alias('c', 'components')
+  .describe('collaborators', 'Highlight collaborators (requires push access)')
+  .alias('C', 'collaborators')
+  .boolean('collaborators')
   .help('help', 'Shows this')
   .argv
 
@@ -70,14 +73,13 @@ if (argv.token || process.env.GITHUB_TOKEN) {
   })
 }
 
-var results = []
+var collaborators = []
 
-function getPage (n) {
+function getCommits (callback) {
   var msg = {
     user: user,
     repo: repo,
     per_page: 100,
-    page: n,
     since: new Date(argv.since).toISOString()
   }
   if (argv.until) {
@@ -86,19 +88,53 @@ function getPage (n) {
   if (argv.path) {
     msg.path = argv.path
   }
-  debug('get-page', 'getting page', n, 'with options:', msg)
 
-  github.repos.getCommits(msg, function (err, data) {
+  const scope = {
+    method: github.repos.getCommits,
+    msg: msg,
+    callback: callback,
+    results: []
+  }
+
+  getPage.call(scope, 0)
+}
+
+function getCollaborators (callback) {
+  var msg = {
+    user: user,
+    repo: repo,
+    per_page: 100
+  }
+
+  const scope = {
+    method: github.repos.getCollaborators,
+    msg: msg,
+    callback: callback,
+    results: []
+  }
+
+  getPage.call(scope, 0)
+}
+
+function getPage (n) {
+  var self = this
+  self.msg.page = n
+
+  debug('get-page', 'getting page', n, 'with options:', self.msg)
+
+  self.method(self.msg, function (err, data) {
     if (err) {
       console.log(err.stack)
       throw err
     }
-    debug('get-page', 'got page', n, 'with', data.length, 'commits')
-    results = results.concat(data)
+    debug('get-page', 'got page', n, 'with', data.length, 'results')
+    self.results = self.results.concat(data)
     if (data.length < 100) {
-      analyze(results)
+      self.callback(self.results)
     } else {
-      getPage(n + 1)
+      // FIXME: Date '2016-01-01T00:00:00.000Z' turns into '"2016-01-01T00:00:00.000Z"' on subsequent calls. WTF?
+      if (self.msg.since) self.msg.since = self.msg.since.replace(/"/g, '')
+      getPage.call(self, n + 1)
     }
   })
 }
@@ -116,7 +152,8 @@ function analyze (list) {
   Object.keys(condensed).sort(function (a, b) {
     return condensed[b].length - condensed[a].length
   }).forEach(function (item) {
-    console.log('* @' + item, condensed[item].length, 'commits')
+    var collab = collaborators.indexOf(item) !== -1 ? '(is a collaborator)' : ''
+    console.log('* @%s %d commits %s', item, condensed[item].length, collab)
     if (argv.components) {
       var types = {}
       condensed[item].forEach(function (msg) {
@@ -141,4 +178,13 @@ function analyze (list) {
   })
 }
 
-getPage(0)
+if (!argv.collaborators) {
+  getCommits(analyze)
+  process.exit()
+}
+
+getCollaborators(function (collab) {
+  collaborators = collab.map(function (c) { return c.login })
+
+  getCommits(analyze)
+})
