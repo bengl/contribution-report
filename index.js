@@ -13,10 +13,13 @@ var argv = require('yargs')
   .alias('r', 'repo')
   .string('repo')
   .demand('repo')
-  .describe('username', 'Your github username, if authenticating')
+  .describe('token', 'Your GitHub API token, if authenticating')
+  .alias('T', 'token')
+  .string('token')
+  .describe('username', 'Your GitHub username, if authenticating')
   .alias('U', 'username')
   .string('username')
-  .describe('password', 'Your github password, if authenticating')
+  .describe('password', 'Your GitHub password, if authenticating')
   .alias('P', 'password')
   .string('password')
   .implies('username', 'password')
@@ -54,7 +57,12 @@ var userAndRepo = argv.repo.split('/')
 var user = userAndRepo[0]
 var repo = userAndRepo[1]
 
-if (argv.username && argv.password) {
+if (argv.token || process.env.GITHUB_TOKEN) {
+  github.authenticate({
+    type: 'token',
+    token: argv.token
+  })
+} else if (argv.username && argv.password) {
   github.authenticate({
     type: 'basic',
     username: argv.username,
