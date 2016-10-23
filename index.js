@@ -148,11 +148,14 @@ function analyze (list) {
   }
   var condensed = {}
   list.forEach(function (commit) {
-    var author = commit.author ? commit.author.login : commit.committer.login
-    if (!condensed[author]) {
-      condensed[author] = []
+    var author = commit.author && commit.author.login
+    var committer = commit.committer && commit.committer.login
+    var contributor = author || committer || 'unknown'
+
+    if (!condensed[contributor]) {
+      condensed[contributor] = []
     }
-    condensed[author].push(commit.commit.message)
+    condensed[contributor].push(commit.commit.message)
   })
   Object.keys(condensed).sort(function (a, b) {
     return condensed[b].length - condensed[a].length
