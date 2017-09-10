@@ -157,42 +157,44 @@ function analyze (list) {
     }
     condensed[contributor].push(commit.commit.message)
   })
-  Object.keys(condensed).sort(function (a, b) {
-    return condensed[b].length - condensed[a].length
-  }).forEach(function (item) {
-    var collab = collaborators.indexOf(item) !== -1 ? '(is a collaborator)' : ''
-    console.log('* @%s %d commits %s', item, condensed[item].length, collab)
-    if (argv.components) {
-      var types = {}
-      condensed[item].forEach(function (msg) {
-        var prefix = msg.split(':')[0].trim()
-        if (prefix.length < 15) { // filter out other uses of `:`
-          if (!types[prefix]) {
-            types[prefix] = 1
-          } else {
-            types[prefix]++
+
+  Object.keys(condensed)
+    .sort(function (a, b) {
+      return condensed[b].length - condensed[a].length
+    })
+    .forEach(function (item) {
+      var collab = collaborators.indexOf(item) !== -1 ? '(is a collaborator)' : ''
+      console.log('* @%s %d commits %s', item, condensed[item].length, collab)
+      if (argv.components) {
+        var types = {}
+        condensed[item].forEach(function (msg) {
+          var prefix = msg.split(':')[0].trim()
+          if (prefix.length < 15) { // filter out other uses of `:`
+            if (!types[prefix]) {
+              types[prefix] = 1
+            } else {
+              types[prefix]++
+            }
           }
+        })
+        var typeStrings = Object.keys(types).sort(function (a, b) {
+          return types[a] - types[b]
+        }).map(function (n) {
+          return types[n] + ' to `' + n + '`'
+        }).join(', ')
+        if (typeStrings.length) {
+          console.log('  *', typeStrings)
         }
-      })
-      var typeStrings = Object.keys(types).sort(function (a, b) {
-        return types[a] - types[b]
-      }).map(function (n) {
-        return types[n] + ' to `' + n + '`'
-      }).join(', ')
-      if (typeStrings.length) {
-        console.log('  *', typeStrings)
       }
-    }
+    })
+}
+
+if (argv.collaborators) {
+  getCollaborators(function (collab) {
+    collaborators = collab.map(function (c) { return c.login })
+
+    getCommits(analyze)
   })
-}
-
-if (!argv.collaborators) {
+} else {
   getCommits(analyze)
-  process.exit()
 }
-
-getCollaborators(function (collab) {
-  collaborators = collab.map(function (c) { return c.login })
-
-  getCommits(analyze)
-})

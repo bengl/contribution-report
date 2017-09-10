@@ -1,6 +1,6 @@
 {
   "name": "contribution-report",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "generate github contribution reports for repositories",
   "main": "index.js",
   "scripts": {
